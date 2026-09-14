@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>New client questionnaire</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,500&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0e0e10; --bg-alt:#17161a; --paper:#f4efe6;
+    --accent:#ff4b33; --line:rgba(244,239,230,0.14); --muted:rgba(244,239,230,0.6);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{
+    background-color:var(--bg);
+    background-image:
+      radial-gradient(1000px 620px at 8% -6%, rgba(255,75,51,0.14), transparent 60%),
+      radial-gradient(820px 820px at 106% 30%, rgba(255,75,51,0.09), transparent 65%),
+      radial-gradient(700px 500px at 50% 108%, rgba(255,75,51,0.07), transparent 65%);
+    background-repeat:no-repeat;
+    background-attachment:fixed, fixed, fixed;
+    color:var(--paper);
+    font-family:'Space Grotesk', sans-serif;
+    min-height:100vh;
+    display:flex; align-items:center; justify-content:center;
+    padding:24px;
+  }
+  .serif{font-family:'Fraunces', serif;}
+  .stage{
+    width:100%; max-width:680px;
+    position:relative;
+    transition:max-width .4s ease;
+  }
+  .stage.wide{max-width:900px;}
+  /* progress */
+  .progress-track{
+    height:3px; background:var(--line); border-radius:10px; overflow:hidden;
+    margin-bottom:56px;
+  }
+  .progress-fill{
+    height:100%; background:var(--accent); width:0%;
+    transition:width .5s cubic-bezier(.2,.8,.2,1);
+  }
+  .step-count{
+    font-size:0.8rem; color:var(--muted); letter-spacing:0.08em; text-transform:uppercase;
+    margin-bottom:18px;
+  }
+  .step-count span{color:var(--accent);}
+
+  .screen{display:none;}
+  .screen.active{
+    display:block;
+    animation:enter .5s cubic-bezier(.2,.8,.2,1);
+  }
+  @keyframes enter{from{opacity:0; transform:translateY(16px);} to{opacity:1; transform:translateY(0);}}
+
+  .q{
+    font-family:'Fraunces', serif;
+    font-weight:500;
+    font-size:clamp(1.6rem, 4vw, 2.4rem);
+    line-height:1.2;
+    letter-spacing:-0.01em;
+    margin-bottom:10px;
+  }
+  .q .opt{color:var(--muted); font-size:0.9rem; font-family:'Space Grotesk', sans-serif; font-weight:400; display:block; margin-top:8px;}
+  .hint{color:var(--muted); font-size:0.95rem; margin-bottom:34px;}
+
+  input[type=text], input[type=email], input[type=tel], textarea{
+    width:100%;
+    background:transparent;
+    border:none;
+    border-bottom:2px solid var(--line);
+    color:var(--paper);
+    font-family:'Space Grotesk', sans-serif;
+    font-size:1.3rem;
+    padding:14px 2px;
+    outline:none;
+    transition:border-color .3s ease;
+  }
+  textarea{resize:vertical; min-height:100px; font-size:1.1rem; line-height:1.5;}
+  input::placeholder, textarea::placeholder{color:rgba(244,239,230,0.28);}
+  input:focus, textarea:focus{border-color:var(--accent);}
+
+  .field{margin-bottom:26px;}
+  .field-label{
+    display:inline-block;
+    background:var(--bg-alt);
+    border:1px solid var(--line);
+    color:var(--muted);
+    font-size:0.72rem;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    padding:5px 12px;
+    border-radius:6px;
+    margin-bottom:10px;
+  }
+  .field input{padding:12px 2px;}
+
+  .choices{display:flex; flex-direction:column; gap:12px;}
+  .choice{
+    border:1.5px solid var(--line);
+    border-radius:12px;
+    padding:18px 22px;
+    cursor:pointer;
+    font-size:1.05rem;
+    display:flex; align-items:center; justify-content:space-between;
+    transition:all .2s ease;
+  }
+  .choice:hover{border-color:var(--muted);}
+  .choice.selected{border-color:var(--accent); background:rgba(255,75,51,0.08);}
+  .choice .mark{
+    width:20px; height:20px; border-radius:5px; border:1.5px solid var(--line);
+    display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-left:16px;
+  }
+  .choice.selected .mark{background:var(--accent); border-color:var(--accent);}
+  .choice .mark::after{content:""; width:6px; height:10px; border:solid var(--bg); border-width:0 2px 2px 0; transform:rotate(45deg) translate(-1px,-1px); opacity:0;}
+  .choice.selected .mark::after{opacity:1;}
+
+  .nav-row{
+    display:flex; align-items:center; justify-content:space-between;
+    margin-top:44px;
+  }
+  .btn-next{
+    background:var(--accent); color:#0e0e10; border:none;
+    padding:15px 32px; border-radius:100px; font-weight:700; font-size:0.95rem;
+    cursor:pointer; transition:transform .25s ease;
+  }
+  .btn-next:hover{transform:translateY(-2px);}
+  .btn-next:disabled{opacity:0.35; cursor:not-allowed; transform:none;}
+  .btn-back{
+    background:none; border:none; color:var(--muted); font-size:0.9rem;
+    cursor:pointer; font-family:'Space Grotesk', sans-serif;
+  }
+  .btn-back:hover{color:var(--paper);}
+  .btn-back.hidden{visibility:hidden;}
+
+  /* summary */
+  .summary h2{font-size:2.2rem; margin-bottom:8px;}
+  .summary .hint{margin-bottom:36px;}
+  .summary-list{border-top:1px solid var(--line);}
+  .summary-item{
+    padding:18px 0; border-bottom:1px solid var(--line);
+    display:grid; grid-template-columns:180px 1fr; gap:20px;
+  }
+  .summary-item .label{color:var(--muted); font-size:0.85rem; text-transform:uppercase; letter-spacing:0.06em;}
+  .summary-item .value{font-size:1.02rem; white-space:pre-wrap;}
+  .summary-actions{display:flex; gap:16px; margin-top:36px; flex-wrap:wrap;}
+  .btn-secondary{
+    border:1px solid var(--line); color:var(--paper); background:none;
+    padding:15px 28px; border-radius:100px; font-size:0.92rem; cursor:pointer;
+    font-family:'Space Grotesk', sans-serif; transition:all .25s ease;
+  }
+  .btn-secondary:hover{background:var(--paper); color:var(--bg); border-color:var(--paper);}
+  .copied-msg{font-size:0.85rem; color:var(--accent); margin-top:14px; opacity:0; transition:opacity .3s ease;}
+  .copied-msg.show{opacity:1;}
+
+  .calendly-inline-widget{
+    border:1px solid var(--line);
+    border-radius:16px;
+    overflow:hidden;
+  }
+
+  .brand-logo{
+    position:fixed; top:20px; left:32px;
+    height:120px; width:auto;
+    z-index:50;
+  }
+  @media(max-width:600px){.brand-logo{height:64px; top:14px; left:20px;}}
+</style>
+</head>
+<body>
+
+<a href="eleven01-website.html"><img src="White.png" alt="Eleven01" class="brand-logo"></a>
+
+<div class="stage" id="stage">
+  <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+  <div class="step-count" id="stepCount">Question <span>1</span> of 8</div>
+
+  <!-- 1: company name -->
+  <div class="screen active" data-step="1">
+    <div class="q">What's your company name?</div>
+    <div class="hint">If it's not final yet, just put what you're using for now.</div>
+    <input type="text" id="q1" placeholder="Type your answer">
+    <div class="nav-row">
+      <button class="btn-back hidden">← Back</button>
+      <button class="btn-next" id="next1" onclick="next(1)" disabled>Next →</button>
+    </div>
+  </div>
+
+  <!-- 2: what does business sell -->
+  <div class="screen" data-step="2">
+    <div class="q">What does your business sell or offer?</div>
+    <textarea id="q2" placeholder="A quick description is fine"></textarea>
+    <div class="nav-row">
+      <button class="btn-back" onclick="back(2)">← Back</button>
+      <button class="btn-next" id="next2" onclick="next(2)" disabled>Next →</button>
+    </div>
+  </div>
+
+  <!-- 3: what do you need -->
+  <div class="screen" data-step="3">
+    <div class="q">What are you in need of?<span class="opt">Select all that apply</span></div>
+    <div class="choices" id="q3choices">
+      <div class="choice multi" data-value="Graphic design / static ads">Graphic design / static ads<span class="mark"></span></div>
+      <div class="choice multi" data-value="Motion design / animated ads">Motion design / animated ads<span class="mark"></span></div>
+      <div class="choice multi" data-value="Video production">Video production<span class="mark"></span></div>
+      <div class="choice multi" data-value="Meta ads management">Meta ads management<span class="mark"></span></div>
+      <div class="choice multi" data-value="UGC management">UGC management<span class="mark"></span></div>
+      <div class="choice multi" data-value="Not sure yet">Not sure yet<span class="mark"></span></div>
+    </div>
+    <div class="nav-row">
+      <button class="btn-back" onclick="back(3)">← Back</button>
+      <button class="btn-next" id="next3" onclick="next(3)" disabled>Next →</button>
+    </div>
+  </div>
+
+  <!-- 4: running ads -->
+  <div class="screen" data-step="4">
+    <div class="q">Are you currently running any ads?</div>
+    <div class="choices" id="q4choices">
+      <div class="choice" data-value="Yes, actively running ads">Yes, actively running ads<span class="mark"></span></div>
+      <div class="choice" data-value="Ran ads before, currently paused">Ran ads before, currently paused<span class="mark"></span></div>
+      <div class="choice" data-value="Never run ads">Never run ads<span class="mark"></span></div>
+    </div>
+    <div class="nav-row">
+      <button class="btn-back" onclick="back(4)">← Back</button>
+      <button class="btn-next" id="next4" onclick="next(4)" disabled>Next →</button>
+    </div>
+  </div>
+
+  <!-- 5: ad goal -->
+  <div class="screen" data-step="5">
+    <div class="q">What's the main goal for your ads?</div>
+    <div class="choices" id="q5choices">
+      <div class="choice" data-value="More leads / calls / bookings">More leads / calls / bookings<span class="mark"></span></div>
+      <div class="choice" data-value="More sales / purchases">More sales / purchases<span class="mark"></span></div>
+      <div class="choice" data-value="Brand awareness">Brand awareness<span class="mark"></span></div>
+      <div class="choice" data-value="App installs / signups">App installs / signups<span class="mark"></span></div>
+      <div class="choice" data-value="Not sure yet">Not sure yet<span class="mark"></span></div>
+    </div>
+    <div class="nav-row">
+      <button class="btn-back" onclick="back(5)">← Back</button>
+      <button class="btn-next" id="next5" onclick="next(5)" disabled>Next →</button>
+    </div>
+  </div>
+
+  <!-- 6: brand assets -->
+  <div class="screen" data-step="6">
+    <div class="q">Do you have brand assets ready?<span class="opt">Logo, photos, brand colors, etc.</span></div>
+    <div class="choices" id="q6choices">
+      <div class="choice" data-value="Yes, everything's ready">Yes, everything's ready<span class="mark"></span></div>
+      <div class="choice" data-value="Some of it">Some of it<span class="mark"></span></div>
+      <div class="choice" data-value="Nothing yet">Nothing yet<span class="mark"></span></div>
+    </div>
+    <div class="nav-row">
+      <button class="btn-back" onclick="back(6)">← Back</button>
+      <button class="btn-next" id="next6" onclick="next(6)" disabled>Next →</button>
+    </div>
+  </div>
+
+  <!-- 7: inspiration -->
+  <div class="screen" data-step="7">
+    <div class="q">Any ads you've seen — yours, a competitor's, anyone's — that you actually like?<span class="opt">Optional</span></div>
+    <div class="hint">Links, screenshots you can describe, or just "something like ___" is fine.</div>
+    <textarea id="q7" placeholder="Type your answer"></textarea>
+    <div class="nav-row">
+      <button class="btn-back" onclick="back(7)">← Back</button>
+      <button class="btn-next" id="next7" onclick="next(7)">Next →</button>
+    </div>
+  </div>
+
+  <!-- 8: budget -->
+  <div class="screen" data-step="8">
+    <div class="q">What's your monthly ad spend budget?</div>
+    <div class="hint">Just the media spend — not what you'd pay us for creative.</div>
+    <div class="choices" id="q8choices">
+      <div class="choice" data-value="Under $500/mo">Under $500/mo<span class="mark"></span></div>
+      <div class="choice" data-value="$500–$2,000/mo">$500–$2,000/mo<span class="mark"></span></div>
+      <div class="choice" data-value="$2,000–$5,000/mo">$2,000–$5,000/mo<span class="mark"></span></div>
+      <div class="choice" data-value="$5,000+/mo">$5,000+/mo<span class="mark"></span></div>
+      <div class="choice" data-value="Not sure yet">Not sure yet<span class="mark"></span></div>
+    </div>
+    <div class="nav-row">
+      <button class="btn-back" onclick="back(8)">← Back</button>
+      <button class="btn-next" id="next8" onclick="showSummary()" disabled>Book my free call →</button>
+    </div>
+  </div>
+
+  <!-- BOOK A CALL -->
+  <div class="screen summary" data-step="9">
+    <h2 class="serif">You're in.</h2>
+    <div class="hint">Pick a time below and we'll walk you through exactly what Eleven01 would do for your business — no pitch, no pressure.</div>
+    <div class="calendly-inline-widget" data-url="https://calendly.com/eleven01/eleven01-discovery-call?background_color=0e0e10&text_color=f4efe6&primary_color=ff4b33&hide_gdpr_banner=1" style="min-width:280px; height:750px;"></div>
+    <div class="copied-msg" id="submitMsg" style="color:var(--muted); text-align:center; margin-top:18px;"></div>
+  </div>
+</div>
+
+<script type="text/javascript" src="https://assets.calendly.com/assets/external/widget.js" async></script>
+
+<script>
+  const totalSteps = 8;
+  const answers = {};
+  const choiceSteps = [3,4,5,6,8];
+
+  // ===== FORMSPREE SETUP =====
+  // Replace this with your real Formspree endpoint (looks like https://formspree.io/f/abcd1234)
+  // Get it free at formspree.io — sign up, create a form, paste the URL below.
+  const FORMSPREE_ENDPOINT = "https://formspree.io/f/mdaqerkb";
+
+  function updateProgress(step){
+    document.getElementById('progressFill').style.width = ((step-1)/totalSteps*100)+'%';
+    document.getElementById('stepCount').innerHTML = 'Question <span>'+Math.min(step,totalSteps)+'</span> of '+totalSteps;
+  }
+
+  function showScreen(step){
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+    document.querySelector('.screen[data-step="'+step+'"]').classList.add('active');
+    updateProgress(step);
+    const input = document.querySelector('.screen[data-step="'+step+'"] input, .screen[data-step="'+step+'"] textarea');
+    if(input) setTimeout(()=>input.focus(), 100);
+  }
+
+  function next(step){
+    saveAnswer(step);
+    showScreen(step+1);
+  }
+  function back(step){ showScreen(step-1); }
+
+  function saveAnswer(step){
+    if(step===1) answers.company = document.getElementById('q1').value;
+    if(step===2) answers.offer = document.getElementById('q2').value;
+    if(step===7) answers.inspiration = document.getElementById('q7').value;
+  }
+
+  // single-select choice groups
+  function setupChoices(containerId, key, nextBtnId){
+    const container = document.getElementById(containerId);
+    container.querySelectorAll('.choice').forEach(c=>{
+      c.addEventListener('click', ()=>{
+        container.querySelectorAll('.choice').forEach(x=>x.classList.remove('selected'));
+        c.classList.add('selected');
+        answers[key] = c.dataset.value;
+        if(nextBtnId) document.getElementById(nextBtnId).disabled = false;
+      });
+    });
+  }
+  // multi-select choice groups (tap to toggle, multiple allowed)
+  function setupMultiChoices(containerId, key, nextBtnId){
+    const container = document.getElementById(containerId);
+    answers[key] = [];
+    container.querySelectorAll('.choice').forEach(c=>{
+      c.addEventListener('click', ()=>{
+        c.classList.toggle('selected');
+        answers[key] = Array.from(container.querySelectorAll('.choice.selected')).map(x=>x.dataset.value);
+        if(nextBtnId) document.getElementById(nextBtnId).disabled = answers[key].length === 0;
+      });
+    });
+  }
+  setupMultiChoices('q3choices','needs','next3');
+  setupChoices('q4choices','runningAds','next4');
+  setupChoices('q5choices','goal','next5');
+  setupChoices('q6choices','assets','next6');
+  setupChoices('q8choices','budget','next8');
+
+  // required text fields — Next stays disabled until something's typed
+  function setupRequiredText(inputId, btnId){
+    const input = document.getElementById(inputId);
+    const btn = document.getElementById(btnId);
+    input.addEventListener('input', ()=>{
+      btn.disabled = input.value.trim().length === 0;
+    });
+  }
+  setupRequiredText('q1','next1');
+  setupRequiredText('q2','next2');
+
+  // enter key advances on text screens
+  document.addEventListener('keydown', (e)=>{
+    if(e.key==='Enter' && !e.shiftKey){
+      const active = document.querySelector('.screen.active');
+      if(active && active.dataset.step){
+        const step = parseInt(active.dataset.step);
+        const btn = document.getElementById('next'+step);
+        if(btn && btn.disabled) return;
+        if(step>=1 && step<totalSteps && !choiceSteps.includes(step)){
+          e.preventDefault();
+          next(step);
+        } else if(step===totalSteps){
+          e.preventDefault();
+          showSummary();
+        }
+      }
+    }
+  });
+
+  function showSummary(){
+    saveAnswer(totalSteps);
+    const rows = [
+      ['Company', answers.company],
+      ['What they sell', answers.offer],
+      ['What they need', (answers.needs && answers.needs.length) ? answers.needs.join(', ') : ''],
+      ['Running ads?', answers.runningAds],
+      ['Ad goal', answers.goal],
+      ['Brand assets', answers.assets],
+      ['Ad inspiration', answers.inspiration],
+      ['Budget', answers.budget]
+    ];
+
+    showScreen(totalSteps+1);
+    document.getElementById('stage').classList.add('wide');
+    document.getElementById('progressFill').style.width='100%';
+    document.getElementById('stepCount').textContent = 'Complete';
+
+    submitToFormspree(rows);
+  }
+
+  function submitToFormspree(rows){
+    const msg = document.getElementById('submitMsg');
+    if(!FORMSPREE_ENDPOINT || FORMSPREE_ENDPOINT.includes('YOUR_FORM_ID')){
+      msg.textContent = "Not connected yet — use Copy or Email below for now.";
+      msg.classList.add('show');
+      return;
+    }
+
+    const fd = new FormData();
+    rows.forEach(([label,val])=>{ fd.append(label, val && val.trim() ? val : '—'); });
+
+    msg.textContent = "Sending…";
+    msg.classList.add('show');
+
+    fetch(FORMSPREE_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Accept': 'application/json' },
+      body: fd
+    })
+    .then(res=>{
+      if(res.ok){
+        msg.textContent = "Sent — you'll get an email notification. ✓";
+      } else {
+        throw new Error('non-ok response');
+      }
+    })
+    .catch(()=>{
+      // Fallback: guaranteed-delivery real form submit (works even if the
+      // background request was blocked, e.g. when opened as a local file).
+      msg.textContent = "Finishing send… (page will redirect)";
+      const form = document.createElement('form');
+      form.action = FORMSPREE_ENDPOINT;
+      form.method = 'POST';
+      rows.forEach(([label,val])=>{
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = label;
+        input.value = val && val.trim() ? val : '—';
+        form.appendChild(input);
+      });
+      document.body.appendChild(form);
+      setTimeout(()=>form.submit(), 900);
+    });
+  }
+
+  window.restart = function(){
+    Object.keys(answers).forEach(k=>delete answers[k]);
+    document.querySelectorAll('input, textarea').forEach(i=>i.value='');
+    document.querySelectorAll('.choice').forEach(c=>c.classList.remove('selected'));
+    document.getElementById('next1').disabled = true;
+    document.getElementById('next2').disabled = true;
+    document.getElementById('next3').disabled = true;
+    document.getElementById('next4').disabled = true;
+    document.getElementById('next5').disabled = true;
+    document.getElementById('next6').disabled = true;
+    document.getElementById('next8').disabled = true;
+    document.getElementById('stage').classList.remove('wide');
+    showScreen(1);
+  }
+
+  updateProgress(1);
+</script>
+
+</body>
+</html>
